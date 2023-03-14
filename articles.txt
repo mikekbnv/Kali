@@ -1,0 +1,6 @@
+https://www.hackingarticles.in/comprehensive-guide-on-metasploitable-2/
+https://www.golinuxcloud.com/learn-hacking-using-metasploitable-2/#Overview_on_NMAP
+https://docs.rapid7.com/metasploit/metasploitable-2-exploitability-guide
+https://docs.metasploit.com/
+https://www.hacking-tutorial.com/hacking-tutorial/hacking-windows-xp-sp3-via-ms11-006-windows-shell-graphvulnerability/
+https://www.getastra.com/blog/security-audit/how-to-hack-windows-xp-using-metasploit-kali-linux-ms08067/

